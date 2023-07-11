@@ -1,0 +1,218 @@
+
+import os
+
+from kivy.app import App
+from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.image import Image,AsyncImage
+from kivy.core.window import Window
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
+
+from kivy.uix.popup import Popup
+from kivy.lang import Builder
+from kivy.uix.screenmanager import ScreenManager,Screen
+from kivy.uix.button import Button
+from kivy.uix.camera import Camera
+import numpy as np
+import tensorflow
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.utils import img_to_array
+from tensorflow.keras.utils import load_img
+from keras.models import load_model
+
+
+from PIL import Image
+import matplotlib.pyplot as plt
+import matplotlib.image as img
+Builder.load_string('''
+<CameraClick>:
+    orientation: 'vertical'
+    Camera:
+        id: camera
+        resolution: (720, 720)
+        size_hint_y: 2
+        height: 50
+        play: False
+    GridLayout:
+        cols: 1
+        size_hint: (1,1)
+        id: c
+        Button:
+            text: 'Capture'
+            size_hint_y: None
+            height: '25dp'
+            on_press: root.capture()
+            on_press:camera.play=not camera.play
+            on_press:root.removec()
+            
+           
+        Button:
+            text: 'start'
+            size_hint_y: None
+            height: '25dp'
+            on_press:camera.play=not camera.play
+            on_press:root.add()
+          
+            
+        Button:
+            text: 'check'
+            size_hint_y: None
+            height: '25dp'
+            on_press:root.model()
+            
+        
+        Button:
+            text: "Upload Image"
+            size_hint_y: None
+            height: 35
+            play:False
+            markup:False
+            on_press: root.select_image()
+         
+        Image:
+            id: display_image
+            size_hint_y: 50
+            height: 300
+            play:True
+        Label:
+            id:result
+            text:"result"
+            size_hint_y: 50
+            height: 100
+        
+''')
+
+class CameraClick(BoxLayout):
+    a=i=0
+    f=""
+    d=""
+    d2=""
+    t=True
+    
+
+    def phone(self):
+        from kivy.uix.camera import Camera
+        from kivy.uix.relativelayout import RelativeLayout
+        button = Button(text='hangup',size_hint=(0.3,0.15),pos_hint= {'x':.35, 'y':.05})
+
+        #init the camera,now Play=False
+        camera = Camera(resolution=(480, 640),play=False,pos=(0,-80))
+
+        relaytiveLayout = RelativeLayout()
+        relaytiveLayout.add_widget(camera)
+        relaytiveLayout.add_widget(button)
+
+        popup = Popup(title='telling',
+                      content=relaytiveLayout,
+                      size_hint=(None, None),size=(300,500), auto_dismiss=False)
+        '''
+            the camera doesn't close
+        '''
+         
+        button.bind(on_press=popup.dismiss)
+
+
+        popup.open()
+
+        # later start the camera
+        camera.play = True
+    def cam():
+        from kivy.uix.camera import Camera
+        camera.play=False
+    def select_image(self):
+        from kivy.core.window import Window
+        from kivy.uix.filechooser import FileChooserIconView
+        self.t=True
+        print(self.t)
+
+        content = BoxLayout(orientation='vertical')
+        file_chooser = FileChooserIconView(path=os.path.expanduser("~"))
+        content.add_widget(file_chooser)
+        popup = Popup(title="Choose an image file", content=content, size_hint=(0.9, 0.9))
+
+        def load(instance):
+            file_path = file_chooser.selection[0]
+            self.ids.camera.source = file_path
+            self.f=file_path
+            print(file_path)
+            popup.dismiss()
+
+        button = Button(text="Load", size_hint_y=None, height=50)
+        button.bind(on_press=load)
+        content.add_widget(button)
+        popup.open()
+    def data1(self):
+        return self.f
+    def data2(self):
+        return self.f
+
+
+    def capture(self):
+        self.t=False
+        print(self.t)
+        self.i=str(self.i)
+        print("for capture")
+        print(self.i)
+        camera = self.ids['camera']
+
+        img=r"C:\Users\Dell\Downloads\app (2)-20230128T044743Z-001\app (2)\app "+"a"+self.i+".jpeg"
+        self.d=img
+        print(img)
+        camera.export_to_png(img)
+        self.f=img
+        self.ids.camera.source = img
+        
+        self.i=int(self.i)
+        self.i=self.i+1
+     
+    def add(self):
+        self.ids.g.add_widget(camera)
+    def removec(self):
+        pass
+
+    def result():
+        pass
+
+    def model(self):
+        if self.t==True:
+            image_path=self.f
+        else:
+            self.i=self.i-1
+            self.i=str(self.i)
+            image_path=r"C:\Users\Dell\Downloads\app (2)-20230128T044743Z-001\app (2)\app "+"a"+self.i+".jpeg"
+        
+        print("for model")
+        print(self.i)
+        print(image_path)
+        model = load_model(r"C:\Users\Dell\Downloads\app (2)-20230128T044743Z-001\app (2)\final_model.h5")
+        test_image = load_img(image_path,target_size = (150,150,3))
+        test_image = image.img_to_array(test_image)
+        test_image = np.expand_dims(test_image,axis = 0)
+        result = model.predict(test_image)
+        print(result)
+        if result[0][0] == 1:
+          p="This is Organic"
+
+          print(p)
+        else:
+          p="this is Non-Organic"
+          print(p)
+        self.ids.result.text=p
+       
+        testImage = img.imread(image_path)
+        
+ 
+# displaying the modified image
+        plt.imshow(testImage)
+
+    def add(self):
+        pass
+class TestCamera(App):
+
+    def build(self):
+       
+        return CameraClick()
+
+TestCamera().run()
